@@ -19,7 +19,11 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def process_image(filename):
+<<<<<<< HEAD
     time.sleep(50)
+=======
+    time.sleep(50)
+>>>>>>> main
 
 @app.route('/')
 def index():
