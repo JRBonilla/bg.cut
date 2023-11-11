@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bg.cut</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <h1>bg.cut</h1>
+
+    <div id="drop-area">
+        <form class="my-form">
+            <p>Drag and drop an image file here</p>
+            <input type="file" id="fileElem" multiple accept="image/*" onchange="handleFiles(this.files)">
+            <label class="button" for="fileElem">Select a File</label>
+            <div id="file-list"></div>
+        </form>
+    </div>
+
+    <div id="upload-status"></div>
+
+    <button id="start-btn" onclick="startProcessing()">Start Processing</button>
+</body>
+</html>

@@ -1,0 +1,62 @@
+/* style.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+#drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.my-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#fileElem {
+    display: none;
+}
+
+.button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#file-list {
+    margin-top: 10px;
+}
+
+#upload-status {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+#start-btn {
+    background-color: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+#start-btn:disabled {
+    background-color: #7f8c8d;
+    cursor: not-allowed;
+}
