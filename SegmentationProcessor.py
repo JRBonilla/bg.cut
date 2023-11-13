@@ -1,49 +1,29 @@
+# Import necessary libraries
+from ultralytics import YOLO
+import random
 import cv2
 import numpy as np
-from ultralytics import YOLO
 
+# Define a class for image segmentation using YOLO model
+class SegmentationProcessor(object):
+    def __init__(self) -> None:
+        # Initialize the YOLO model with the specified weights file
+        self.model = YOLO('Assets/Models/yolov8m-seg.pt')
 
-def func():
-    model = YOLO("./Assets/Models/yolov8m-seg.pt")
+    def detect(self, image):
+        # Use the YOLO model to predict segmentation masks for the input image
+        results_container = self.model.predict(image)
 
-    filepath = "./Assets/Images/test.jpg"
-    image = cv2.imread(filepath)
+        # Extract the inner array containing the actual results (boxes and masks)
+        results = results_container[0]
 
-    results = model(image)
+        # Extract masks and bounding boxes from the segmentation results
+        contours = [np.int32([mask]) for mask, box in zip(results.masks.xy, results.boxes)]
 
-    if(results[0].masks is not None):
-        # Convert mask to single channel image
-        mask_raw = results[0].masks[0].cpu().data.numpy().transpose(1, 2, 0)
-        
-        # Convert single channel grayscale to 3 channel image
-        mask_3channel = cv2.merge((mask_raw,mask_raw,mask_raw))
+        # Extract bounding boxes, classes, and confidence scores
+        bboxes = np.array(results.boxes.xyxy.cpu(), dtype="int")
+        classes = np.array(results.boxes.cls.cpu(), dtype="int")
+        scores = np.array(results.boxes.conf.cpu(), dtype="float").round(2)
 
-        # Get the size of the original image (height, width, channels)
-        h2, w2, c2 = results[0].orig_img.shape
-        
-        # Resize the mask to the same size as the image (can probably be removed if image is the same size as the model)
-        mask = cv2.resize(mask_3channel, (w2, h2))
-
-        # Convert BGR to HSV
-        hsv = cv2.cvtColor(mask, cv2.COLOR_BGR2HSV)
-
-        # Define range of brightness in HSV
-        lower_black = np.array([0,0,0])
-        upper_black = np.array([0,0,1])
-
-        # Create a mask. Threshold the HSV image to get everything black
-        mask = cv2.inRange(mask, lower_black, upper_black)
-
-        # Invert the mask to get everything but black
-        mask = cv2.bitwise_not(mask)
-
-        # Apply the mask to the original image
-        masked = cv2.bitwise_and(results[0].orig_img, results[0].orig_img, mask=mask)
-
-        # Show the masked part of the image
-        cv2.imshow("mask", masked)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    func()
+        # Return the segmentation results
+        return bboxes, classes, contours, scores
