@@ -18,8 +18,9 @@ app = Flask(__name__)
 # Create an instance of the SegmentationProcessor
 processor = SegmentationProcessor()
 
-# Store the uploaded image
+# Store the uploaded image and the contours of the masks
 uploaded_image = None
+edited_image = None;
 contours = []
 
 # Define the route for the main page
@@ -34,6 +35,12 @@ def allowed_file(filename):
 # Convert RGB color to hexadecimal string
 def rgb_to_hex(color):
     return "#{:02x}{:02x}{:02x}".format(color[0], color[1], color[2])
+
+# Encodes an image in base64 for rendering in HTML
+def encode_image(image):
+    _, img_encoded = cv2.imencode('.png', image)
+    img_base64 = base64.b64encode(img_encoded).decode('utf-8')
+    return img_base64
 
 # Define the route for handling image uploads
 @app.route('/upload', methods=['POST'])
@@ -68,13 +75,10 @@ def upload():
     elif image.shape[2] != 3:
         return jsonify({'error': 'Image does not have 3 channels'})
 
-    # Convert the segmented image to base64 for rendering in HTML
-    _, img_encoded = cv2.imencode('.png', image)
-    img_base64 = base64.b64encode(img_encoded).decode('utf-8')
-
+    # Update the current uploaded image
     uploaded_image = image
 
-    return jsonify({'image': img_base64})
+    return jsonify({'image': encode_image(image)})
 
 # Define the route for analyzing the uploaded image
 @app.route('/analyze', methods=['POST'])
@@ -95,23 +99,21 @@ def analyze():
         bgr_color = (color[2], color[1], color[0]) # Convert RGB color to BGR for OpenCV
         cv2.fillPoly(mask_overlay, [contour], bgr_color)
 
-    # Encode the image for JSON response
-    _, img_encoded = cv2.imencode('.png', mask_overlay)
-    img_base64 = base64.b64encode(img_encoded).decode('utf-8')
-
     # Return the segmentation results as JSON
     return jsonify({
         'bboxes': bboxes.tolist(),
         'classes': classes.tolist(),
         'contours': [c.flatten().tolist() for c in contours],
         'scores': scores.tolist(),
-        'mask_overlay': img_base64,
+        'mask_overlay': encode_image(mask_overlay),
         'colors': [rgb_to_hex(color) for color in colors]
     })
 
 # Define the route for cutting the selected masks and compositing them as one image
 @app.route('/cut', methods=['POST'])
 def cut():
+    global edited_image
+
     try:
         # Check if 'selected_masks' is present and is a list
         if 'selected_masks' not in request.json or not isinstance(request.json['selected_masks'], list):
@@ -128,11 +130,18 @@ def cut():
                 cv2.fillPoly(mask, [contour], (255, 255, 255))  # White mask where the contour is
                 combined_mask = cv2.add(combined_mask, mask)  # Combine masks
 
-        # Apply the combined mask to the original image
-        result = cv2.bitwise_and(uploaded_image, combined_mask)
+        # Convert the combined mask to a single-channel image
+        combined_mask = cv2.cvtColor(combined_mask, cv2.COLOR_BGR2GRAY)
 
-        # Save the result image
-        cv2.imwrite('Assets/Images/results.png', result)
+        # Create an alpha channel based on the combined mask & set it to 0 for areas outside the mask
+        alpha_channel = np.ones_like(combined_mask) * 255 # Initialize channel as fully opaque
+        alpha_channel[combined_mask == 0] = 0 # All black pixels in the mask are made transparent
+
+        # Add the alpha channel to the original image
+        result = cv2.merge((uploaded_image, alpha_channel))
+
+        # Store the edited image result
+        edited_image = result
 
         # Encode the image for JSON response
         _, img_encoded = cv2.imencode('.png', result)
@@ -142,6 +151,30 @@ def cut():
             'result': img_base64
         })
 
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        })
+
+# Function to remove excess background
+@app.route('/trim', methods=['POST'])
+def trim():
+    try:
+        # Split the image into channels
+        _, _, _, alpha = cv2.split(edited_image)
+
+        # Find the coordinates of the non-zero pixels in the alpha channel
+        coords = cv2.findNonZero(alpha)
+
+        # Get the bounding box of the non-zero pixels
+        x, y, w, h = cv2.boundingRect(coords)
+    
+        # Crop the image to the bounding box
+        trimmed_image = edited_image[y:y+h, x:x+w]
+
+        return jsonify({
+            'trimmed': encode_image(trimmed_image)
+        })
     except Exception as e:
         return jsonify({
             'error': str(e)
@@ -159,5 +192,5 @@ if __name__ == '__main__':
     t.start()
 
     # Create a webview window and start the application
-    webview.create_window("bg.cut", "http://127.0.0.1:5000", width=1440, height=900)
+    webview.create_window("bg.cut", "http://127.0.0.1:5000", width=1440, height=800)
     webview.start(debug=True)

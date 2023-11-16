@@ -56,6 +56,7 @@ body {
   transition: box-shadow 0.3s ease;
   box-shadow: 0 4px 12px -2px rgba(255, 165, 0, 0.7), 0 0 0 1px rgba(255, 165, 0, 0.7);
 }
+
 .upload-container > canvas {
   max-width: 100%;
   max-height: 100%;
@@ -113,8 +114,24 @@ button {
   justify-content: space-between;
 }
 
-#changeBtn,
-#cutBtn {
+.button-container button {
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; /* Add box-shadow transition */
+}
+
+/* Add hover animation for buttons */
+.button-container button:not(:disabled):hover {
+  background-color: #555;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add box-shadow on hover */
+}
+
+.image-button {
   width: 49%;
 }
 
@@ -127,7 +144,27 @@ button {
   color: #fff;
 }
 
-button:disabled, #changeBtn:disabled {
+#changeBtn {
+  background-color: #3498db; /* Blue */
+  color: #fff;
+}
+
+#cutBtn {
+  background-color: #e74c3c; /* Red */
+  color: #fff;
+}
+
+#trimBtn {
+  background-color: #2ecc71; /* Green */
+  color: #fff;
+}
+
+#saveBtn {
+  background-color: #f39c12; /* Yellow */
+  color: #fff;
+}
+
+#changeBtn:disabled, #cutBtn:disabled {
   background-color: #ddd;
   cursor: not-allowed;
 }

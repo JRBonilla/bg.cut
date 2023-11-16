@@ -17,12 +17,16 @@
             <input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">
         </div>
         <div class="button-container">
-            <button onclick="selectFile()" id="changeBtn" disabled>Change</button>
-            <button onclick="cutSelectedMasks()" id="cutBtn" disabled>Cut</button>
+            <button class="image-button" onclick="selectFile()" id="changeBtn" disabled>Change</button>
+            <button class="image-button" onclick="cutSelectedMasks()" id="cutBtn" disabled>Cut</button>
         </div>
     </div>
     <div class="output-area" id="outputArea">
         <div class="upload-container" id="resultContainer"></div>
+        <div class="button-container">
+            <button class="image-button" onclick="trimImage()" id="trimBtn">Trim</button>
+            <button class="image-button" onclick="saveImage()" id="saveBtn">Save</button>
+        </div>
     </div>
 </div>
 </body>

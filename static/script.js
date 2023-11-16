@@ -1,7 +1,9 @@
 const selectFile = () => document.getElementById('fileInput').click();
 
-let currentImage = null;
+let uploadedImage = null;
+let editedImage = null;
 let selectedMasks = [];
+let padding = 40;
 
 const createCanvasAndContext = (width, height) => {
   const canvas = document.createElement('canvas');
@@ -22,28 +24,28 @@ const uploadImage = async (files) => {
     });
 
     const data = await response.json();
-    showImage(data.image);
+    uploadedImage = `data:image/png;base64,${data.image}`;
+
+    showImage();
     analyzeImage();
   } catch (error) {
     console.error('Error:', error);
   }
 };
 
-const showImage = (imageData) => {
-  currentImage = `data:image/png;base64,${imageData}`;
-
+const showImage = () => {
   const container = document.getElementById('uploadContainer');
   container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
 
   const scaledImg = new Image();
-  scaledImg.src = currentImage;
+  scaledImg.src = uploadedImage;
   scaledImg.onload = () => {
     const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-    const scale = Math.min(maxWidth / scaledImg.width, maxHeight / scaledImg.height);
+    const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
 
     const imgElement = document.createElement('img');
     imgElement.id = 'uploadedImg';
-    imgElement.src = currentImage;
+    imgElement.src = uploadedImage;
     imgElement.classList.add('faded-out');
     imgElement.style.width = `${scaledImg.width * scale}px`;
     imgElement.style.height = `${scaledImg.height * scale}px`;
@@ -76,11 +78,11 @@ const renderMasks = async (contours, colors, overlay) => {
   container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
 
   const img = new Image();
-  img.src = currentImage;
+  img.src = uploadedImage;
   img.onload = () => {
     // Calculate the scaled canvas width and height
     const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-    const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+    const scale = Math.min((maxWidth - padding) / img.width, (maxHeight - padding) / img.height);
     const [canvasWidth, canvasHeight] = [img.width * scale, img.height * scale];
 
     // Draw the uploaded image on one canvas
@@ -126,7 +128,9 @@ const renderMasks = async (contours, colors, overlay) => {
       // Check if the clicked color is not black; if not, then a mask is selected
       if (clickedColor !== '#000000' && clickedColor !== '#000') {
         const selectedMaskIndex = colors.indexOf(clickedColor);
-        handleMaskSelection(contours, selectedMaskIndex, colors, maskCtx, imageCtx, combinedCtx, scale);
+        if (selectedMaskIndex >= 0) {
+          handleMaskSelection(contours, selectedMaskIndex, colors, maskCtx, imageCtx, combinedCtx, scale);
+        }
       }
     });
   };
@@ -145,6 +149,7 @@ const handleMaskSelection = (masks, selectedMaskIndex, colors, maskCtx, imageCtx
   }
 
   cutBtn.disabled = selectedMasks.length == 0 ? true : false;
+  console.log(selectedMasks);
 
   redrawMasks(masks, colors, maskCtx, scale);
 
@@ -193,6 +198,7 @@ const cutSelectedMasks = async () => {
     const data = await response.json();
 
     result = `data:image/png;base64,${data.result}`;
+    editedImage = result;
 
     const container = document.getElementById('resultContainer');
     container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
@@ -219,6 +225,65 @@ const cutSelectedMasks = async () => {
     changeBtn.disabled = false;
     cutBtn.disabled = false;
 
+  } catch (error) {
+    console.error('Error: ', error);
+  }
+};
+
+const trimImage = async () => {
+  try {
+    const response = await fetch('/trim', {
+      method: 'POST'
+    });
+    const data = await response.json();
+
+    result = `data:image/png;base64,${data.trimmed}`;
+    editedImage = result;
+
+    const container = document.getElementById('resultContainer');
+    container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
+
+    const scaledImg = new Image();
+    scaledImg.src = result;
+    scaledImg.onload = () => {
+      const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
+      const scale = Math.min(maxWidth / scaledImg.width, maxHeight / scaledImg.height);
+  
+      const imgElement = document.createElement('img');
+      imgElement.id = 'uploadedImg';
+      imgElement.src = result;
+      imgElement.style.width = `${scaledImg.width * scale}px`;
+      imgElement.style.height = `${scaledImg.height * scale}px`;
+  
+      container.appendChild(imgElement);
+    };
+  } catch (error) {
+    console.error('Error: ', error);
+  }
+}
+
+const saveImage = async () => {
+  try {
+    if ('showSaveFilePicker' in window) {
+      // Use the File System Access API if available
+      const fileHandle = await showSaveFilePicker({
+        suggestedName: 'output_image.png',
+        types: [{
+          description: 'PNG Files',
+          accept: { 'image/png': ['.png'] },
+        }],
+      });
+
+      const writable = await fileHandle.createWritable();
+      await writable.write(await fetch(editedImage).then(response => response.blob()));
+      await writable.close();
+    } else {
+      // Fallback to standard download behavior
+      const downloadLink = document.createElement('a');
+      downloadLink.href = editedImage;
+      downloadLink.download = 'output_image.png';
+      downloadLink.click();
+    }
   } catch (error) {
     console.error('Error: ', error);
   }
