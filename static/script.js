@@ -5,6 +5,28 @@ let editedImage = null;
 let selectedMasks = [];
 let padding = 40;
 
+document.addEventListener('DOMContentLoaded', () => {
+  const uploadContainer = document.getElementById('uploadContainer');
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadContainer.addEventListener(eventName, e => e.preventDefault(), false);
+    document.body.addEventListener(eventName, e => e.preventDefault(), false);
+  });
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    uploadContainer.addEventListener(eventName, () => uploadContainer.classList.add('drag-over'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    uploadContainer.addEventListener(eventName, () => uploadContainer.classList.remove('drag-over'), false);
+  });
+
+  uploadContainer.addEventListener('drop', async e => {
+    const files = e.dataTransfer.files;
+    await uploadImage(files);
+  });
+});
+
 const createCanvasAndContext = (width, height) => {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -209,7 +231,7 @@ const cutSelectedMasks = async () => {
     scaledImg.src = result;
     scaledImg.onload = () => {
       const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-      const scale = Math.min(maxWidth / scaledImg.width, maxHeight / scaledImg.height);
+      const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
   
       const imgElement = document.createElement('img');
       imgElement.id = 'uploadedImg';
@@ -247,7 +269,7 @@ const trimImage = async () => {
     scaledImg.src = result;
     scaledImg.onload = () => {
       const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-      const scale = Math.min(maxWidth / scaledImg.width, maxHeight / scaledImg.height);
+      const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
   
       const imgElement = document.createElement('img');
       imgElement.id = 'uploadedImg';

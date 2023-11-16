@@ -1,18 +1,20 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f4f4f4;
-  color: #333;
+  background-color: #f8f9fa;
+  color: #343a40;
+  overflow: hidden;
 }
 
 .header {
-  margin: 20px 0;
-  font-size: 24px;
-  color: #333;
+  margin: 30px 0;
+  font-size: 42px;
+  color: #343a40;
+  font-weight: bold;
 }
 
 .container {
@@ -24,12 +26,13 @@ body {
 .output-area {
   width: 640px;
   height: 480px;
-  margin: 20px;
+  margin: 0 20px;
   box-sizing: border-box;
   border: none;
   border-radius: 16px;
   position: relative;
-  background-color: #fff;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .output-area {
@@ -44,37 +47,30 @@ body {
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  
   border: none;
   border-radius: 16px;
-
-  box-shadow: 0 4px 12px -2px rgba(255, 165, 0, 0.1), 0 0 0 1px rgba(255, 165, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
   transition: box-shadow 0.3s ease;
 }
 
 .upload-container:hover {
   transition: box-shadow 0.3s ease;
-  box-shadow: 0 4px 12px -2px rgba(255, 165, 0, 0.7), 0 0 0 1px rgba(255, 165, 0, 0.7);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
-.upload-container > canvas {
-  max-width: 100%;
-  max-height: 100%;
-  display: block;
-  margin: auto;
-}
-
+.upload-container > canvas,
 #uploadedImg {
   max-width: 100%;
   max-height: 100%;
   display: block;
   margin: auto;
+  border-radius: 16px;
 }
 
 .instructions {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
-  color: #ff7f50;
+  color: #007bff;
   max-width: 100%;
   max-height: 100%;
   padding: 20px;
@@ -83,98 +79,71 @@ body {
 .file-label {
   display: inline-block;
   padding: 10px;
-  border: 2px solid #ff7f50;
+  border: 2px solid #007bff;
   border-radius: 8px;
-  color: #ff7f50;
+  color: #007bff;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 .file-label:hover {
-  background-color: #ff7f50;
+  background-color: #007bff;
   color: #fff;
-}
-
-button {
-  margin-top: 10px;
-  padding: 10px;
-  width: 60px;
-  height: 60px;
-  font-size: 16px;
-  background-color: #4caf50;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.button-container {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
 }
 
 .button-container button {
   margin-top: 10px;
-  padding: 10px;
+  padding: 12px;
+  width: 120px;
   font-size: 16px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; /* Add box-shadow transition */
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Add hover animation for buttons */
 .button-container button:not(:disabled):hover {
-  background-color: #555;
+  background-color: #0056b3;
   color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add box-shadow on hover */
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
 }
 
-.image-button {
+.button-container .image-button {
   width: 49%;
 }
 
 #changeBtn {
-  background-color: #fff;
-  color: #4caf50;
-}
-
-#changeBtn:disabled {
-  color: #fff;
-}
-
-#changeBtn {
-  background-color: #3498db; /* Blue */
+  background-color: #007bff;
   color: #fff;
 }
 
 #cutBtn {
-  background-color: #e74c3c; /* Red */
+  background-color: #dc3545;
   color: #fff;
 }
 
 #trimBtn {
-  background-color: #2ecc71; /* Green */
+  background-color: #28a745;
   color: #fff;
 }
 
 #saveBtn {
-  background-color: #f39c12; /* Yellow */
-  color: #fff;
+  background-color: #ffc107;
+  color: #343a40;
 }
 
-#changeBtn:disabled, #cutBtn:disabled {
-  background-color: #ddd;
+#changeBtn:disabled,
+#cutBtn:disabled {
+  background-color: #ced4da;
   cursor: not-allowed;
 }
 
 .drag-over {
-  border-color: #4caf50;
+  border-color: #007bff;
 }
 
 .faded-out {
-  filter: opacity(25%);
+  opacity: 0.5;
 }
 
 .dot-spin {

@@ -192,5 +192,5 @@ if __name__ == '__main__':
     t.start()
 
     # Create a webview window and start the application
-    webview.create_window("bg.cut", "http://127.0.0.1:5000", width=1440, height=800)
-    webview.start(debug=True)
+    webview.create_window("bg.cut", "http://127.0.0.1:5000", width=1440, height=800, resizable=False)
+    webview.start()

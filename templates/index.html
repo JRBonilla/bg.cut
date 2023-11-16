@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <title>bg.cut</title>
 </head>
 <body>
-<h1 class="header">bg.cut</h1>
+<h1 class="animate__animated animate__fadeInUp header">bg.cut</h1>
 <div class="container">
-    <div class="input-area" id="inputArea">
+    <div class="animate__animated animate__fadeInUp input-area" id="inputArea">
         <div class="upload-container" id="uploadContainer">
             <div class="instructions" id="instructions">Drag and drop a file or</div>
             <label for="fileInput" class="file-label">Select File</label>
@@ -21,7 +25,7 @@
             <button class="image-button" onclick="cutSelectedMasks()" id="cutBtn" disabled>Cut</button>
         </div>
     </div>
-    <div class="output-area" id="outputArea">
+    <div class="animate__animated animate__fadeInUp output-area" id="outputArea">
         <div class="upload-container" id="resultContainer"></div>
         <div class="button-container">
             <button class="image-button" onclick="trimImage()" id="trimBtn">Trim</button>
