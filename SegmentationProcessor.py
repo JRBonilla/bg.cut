@@ -1,14 +1,12 @@
 # Import necessary libraries
 from ultralytics import YOLO
-import random
-import cv2
 import numpy as np
 
 # Define a class for image segmentation using YOLO model
 class SegmentationProcessor(object):
     def __init__(self) -> None:
         # Initialize the YOLO model with the specified weights file
-        self.model = YOLO('Assets/Models/yolov8m-seg.pt')
+        self.model = YOLO('Assets/Models/yolov8l-seg.pt')
 
     def detect(self, image):
         # Use the YOLO model to predict segmentation masks for the input image

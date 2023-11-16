@@ -8,15 +8,22 @@
     <title>bg.cut</title>
 </head>
 <body>
-    <h1>bg.cut</h1>
-    <div id="drop-area">
-        <form class="my-form">
-            <p>Drag and drop an image here, or click to select one</p>
-            <input type="file" id="fileElem" multiple accept="image/*" onchange="handleFiles(this.files)">
-        </form>
+<h1 class="header">bg.cut</h1>
+<div class="container">
+    <div class="input-area" id="inputArea">
+        <div class="upload-container" id="uploadContainer">
+            <div class="instructions" id="instructions">Drag and drop a file or</div>
+            <label for="fileInput" class="file-label">Select File</label>
+            <input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">
+        </div>
+        <div class="button-container">
+            <button onclick="selectFile()" id="changeBtn" disabled>Change</button>
+            <button onclick="cutSelectedMasks()" id="cutBtn" disabled>Cut</button>
+        </div>
     </div>
-    <button id="start-btn" onclick="">Start Processing</button>
-
-    <div id="output"></div>
+    <div class="output-area" id="outputArea">
+        <div class="upload-container" id="resultContainer"></div>
+    </div>
+</div>
 </body>
 </html>
