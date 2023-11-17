@@ -9,9 +9,6 @@ import threading
 import random
 from SegmentationProcessor import SegmentationProcessor
 
-# Define the allowed file extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
 # Create a Flask web application
 app = Flask(__name__)
 
@@ -20,17 +17,13 @@ processor = SegmentationProcessor()
 
 # Store the uploaded image and the contours of the masks
 uploaded_image = None
-edited_image = None;
+output_image = None;
 contours = []
 
 # Define the route for the main page
 @app.route('/')
 def index():
     return render_template('index.html')
-
-# Checks if the provided file is an allowed file type
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Convert RGB color to hexadecimal string
 def rgb_to_hex(color):
@@ -47,72 +40,64 @@ def encode_image(image):
 def upload():
     global uploaded_image
 
-    # Check if the 'file' part is present in the request
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'})
+    try:
+        # Get the uploaded file from the request
+        file = request.files['file']
 
-    # Get the uploaded file from the request
-    file = request.files['file']
+        # Read the uploaded image using OpenCV
+        image = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
 
-    # Check if a file is selected
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'})
+        # Check if the image is valid
+        if image is None:
+            return jsonify({'error': 'Invalid file'})
 
-    # Check if the file has an allowed extension
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Unsupported file type'})
+        # Ensure the image has 3 channels (convert if necessary)
+        if image.shape[2] == 4:  # Assuming 4 channels (RGBA)
+            image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
+        elif image.shape[2] != 3:
+            return jsonify({'error': 'Image does not have 3 channels'})
 
-    # Read the uploaded image using OpenCV
-    image = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_UNCHANGED)
+        # Update the current uploaded image
+        uploaded_image = image
 
-    # Check if the image is valid
-    if image is None:
-        return jsonify({'error': 'Invalid file'})
-
-    # Ensure the image has 3 channels (convert if necessary)
-    if image.shape[2] == 4:  # Assuming 4 channels (RGBA)
-        image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
-    elif image.shape[2] != 3:
-        return jsonify({'error': 'Image does not have 3 channels'})
-
-    # Update the current uploaded image
-    uploaded_image = image
-
-    return jsonify({'image': encode_image(image)})
+        return jsonify({'image': encode_image(image)})
+    except Exception as e:
+        return jsonify({ 'error: ', str(e) })
 
 # Define the route for analyzing the uploaded image
 @app.route('/analyze', methods=['POST'])
 def analyze():
     global contours
 
-    # Perform segmentation on the uploaded image
-    bboxes, classes, contours, scores = processor.detect(uploaded_image)
+    try:
+        # Perform segmentation on the uploaded image
+        bboxes, contours = processor.detect(uploaded_image)
 
-    # Check if no segments are detected
-    if not contours:
-        return jsonify({'error': 'No segments detected'})
-    
-    # Create an empty image with each mask drawn in a unique RGB color
-    mask_overlay = np.zeros_like(uploaded_image)
-    colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in contours]
-    for contour, color in zip(contours, colors):
-        bgr_color = (color[2], color[1], color[0]) # Convert RGB color to BGR for OpenCV
-        cv2.fillPoly(mask_overlay, [contour], bgr_color)
+        # Check if no segments are detected
+        if not contours:
+            return jsonify({'error': 'No segments detected'})
+        
+        # Create an empty image with each mask drawn in a unique RGB color
+        mask_overlay = np.zeros_like(uploaded_image)
+        colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in contours]
+        for contour, color in zip(contours, colors):
+            bgr_color = (color[2], color[1], color[0]) # Convert RGB color to BGR for OpenCV
+            cv2.fillPoly(mask_overlay, [contour], bgr_color)
 
-    # Return the segmentation results as JSON
-    return jsonify({
-        'bboxes': bboxes.tolist(),
-        'classes': classes.tolist(),
-        'contours': [c.flatten().tolist() for c in contours],
-        'scores': scores.tolist(),
-        'mask_overlay': encode_image(mask_overlay),
-        'colors': [rgb_to_hex(color) for color in colors]
-    })
+        # Return the segmentation results as JSON
+        return jsonify({
+            'bboxes': bboxes.tolist(),
+            'contours': [c.flatten().tolist() for c in contours],
+            'mask_overlay': encode_image(mask_overlay),
+            'colors': [rgb_to_hex(color) for color in colors]
+        })
+    except Exception as e:
+        return jsonify({ 'error: ', str(e) })
 
 # Define the route for cutting the selected masks and compositing them as one image
 @app.route('/cut', methods=['POST'])
 def cut():
-    global edited_image
+    global output_image
 
     try:
         # Check if 'selected_masks' is present and is a list
@@ -136,32 +121,28 @@ def cut():
         # Create an alpha channel based on the combined mask & set it to 0 for areas outside the mask
         alpha_channel = np.ones_like(combined_mask) * 255 # Initialize channel as fully opaque
         alpha_channel[combined_mask == 0] = 0 # All black pixels in the mask are made transparent
+        alpha_channel_blurred = cv2.GaussianBlur(alpha_channel, (0, 0), sigmaX=1, sigmaY=1) # Blur the edges of the alpha channel
 
         # Add the alpha channel to the original image
-        result = cv2.merge((uploaded_image, alpha_channel))
+        result = cv2.merge((uploaded_image, alpha_channel_blurred))
+
+        # Clear data for transparent areas
+        result[alpha_channel_blurred == 0] = 0  # Set all channels to zero where alpha is zero
 
         # Store the edited image result
-        edited_image = result
+        output_image = result
 
-        # Encode the image for JSON response
-        _, img_encoded = cv2.imencode('.png', result)
-        img_base64 = base64.b64encode(img_encoded).decode('utf-8')
-
-        return jsonify({
-            'result': img_base64
-        })
+        return jsonify({ 'result': encode_image(result) })
 
     except Exception as e:
-        return jsonify({
-            'error': str(e)
-        })
+        return jsonify({ 'error': str(e) })
 
 # Function to remove excess background
 @app.route('/trim', methods=['POST'])
 def trim():
     try:
         # Split the image into channels
-        _, _, _, alpha = cv2.split(edited_image)
+        _, _, _, alpha = cv2.split(output_image)
 
         # Find the coordinates of the non-zero pixels in the alpha channel
         coords = cv2.findNonZero(alpha)
@@ -170,15 +151,11 @@ def trim():
         x, y, w, h = cv2.boundingRect(coords)
     
         # Crop the image to the bounding box
-        trimmed_image = edited_image[y:y+h, x:x+w]
+        trimmed_image = output_image[y:y+h, x:x+w]
 
-        return jsonify({
-            'trimmed': encode_image(trimmed_image)
-        })
+        return jsonify({ 'trimmed': encode_image(trimmed_image) })
     except Exception as e:
-        return jsonify({
-            'error': str(e)
-        })
+        return jsonify({ 'error': str(e) })
 
 # Function to run the Flask application in a separate thread
 def run_app():

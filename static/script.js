@@ -1,7 +1,7 @@
-const selectFile = () => document.getElementById('fileInput').click();
+const selectImage = () => document.getElementById('fileInput').click();
 
 let uploadedImage = null;
-let editedImage = null;
+let outputImage = null;
 let selectedMasks = [];
 let padding = 40;
 
@@ -36,6 +36,11 @@ const createCanvasAndContext = (width, height) => {
 };
 
 const uploadImage = async (files) => {
+  // Reset the values if they are already set
+  uploadedImage = null;
+  outputImage = null;
+  selectedMasks = [];
+
   const formData = new FormData();
   formData.append('file', files[0]);
 
@@ -44,18 +49,17 @@ const uploadImage = async (files) => {
       method: 'POST',
       body: formData
     });
-
     const data = await response.json();
-    uploadedImage = `data:image/png;base64,${data.image}`;
 
-    showImage();
+    uploadedImage = `data:image/png;base64,${data.image}`;
+    displayImage();
     analyzeImage();
   } catch (error) {
     console.error('Error:', error);
   }
 };
 
-const showImage = () => {
+const displayImage = () => {
   const container = document.getElementById('uploadContainer');
   container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
 
@@ -136,12 +140,10 @@ const renderMasks = async (contours, colors, overlay) => {
     // Add click event listener to the combined canvas
     combinedCanvas.addEventListener('click', (event) => {
       const rect = combinedCanvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
 
       // Check the corresponding pixel color on the overlay
-      const overlayX = Math.floor(x);
-      const overlayY = Math.floor(y);
+      const overlayX = Math.floor(event.clientX - rect.left);
+      const overlayY = Math.floor(event.clientY - rect.top);
 
       // Get the RGBA values of the clicked pixel from the overlay
       const overlayImageData = overlayCtx.getImageData(overlayX, overlayY, 1, 1).data;
@@ -151,46 +153,50 @@ const renderMasks = async (contours, colors, overlay) => {
       if (clickedColor !== '#000000' && clickedColor !== '#000') {
         const selectedMaskIndex = colors.indexOf(clickedColor);
         if (selectedMaskIndex >= 0) {
-          handleMaskSelection(contours, selectedMaskIndex, colors, maskCtx, imageCtx, combinedCtx, scale);
+          const contexts = { maskCtx, imageCtx, combinedCtx };
+          updateMaskSelection(contours, selectedMaskIndex, colors, contexts, scale);
         }
       }
     });
   };
 };
 
-const handleMaskSelection = (masks, selectedMaskIndex, colors, maskCtx, imageCtx, combinedCtx, scale) => {
-  maskCtx.clearRect(0, 0, maskCtx.canvas.width, maskCtx.canvas.height);
+const updateMaskSelection = (masks, selectedMaskIndex, colors, contexts, scale) => {
+  const { maskCtx: maskCtx, imageCtx: imageCtx, combinedCtx: combinedCtx } = contexts;
 
+  // Add or remove the selected mask as needed
   if (!selectedMasks.includes(selectedMaskIndex)) {
-    // If the mask isn't already selected, add it to the list and highlight it on the context
     selectedMasks.push(selectedMaskIndex);
   } else {
-    // If the mask is already selected, remove it from the list and redraw with the original styling
     const indexToRemove = selectedMasks.indexOf(selectedMaskIndex);
     selectedMasks.splice(indexToRemove, 1);
   }
-
-  cutBtn.disabled = selectedMasks.length == 0 ? true : false;
-  console.log(selectedMasks);
-
+  
+  // Clear the mask context and then redraw all masks
+  maskCtx.clearRect(0, 0, maskCtx.canvas.width, maskCtx.canvas.height);
   redrawMasks(masks, colors, maskCtx, scale);
-
+  
+  // Refresh the combined context with updated mask and image contexts
   combinedCtx.clearRect(0, 0, combinedCtx.canvas.width, combinedCtx.canvas.height);
   combinedCtx.drawImage(imageCtx.canvas, 0, 0);
   combinedCtx.drawImage(maskCtx.canvas, 0, 0);
+  
+  // Toggle the cut button based on number of selected masks
+  cutBtn.disabled = selectedMasks.length == 0 ? true : false;
 };
 
 const redrawMasks = (contours, colors, ctx, scale) => {
   for (let i = 0; i < contours.length; i++) {
-    const color = !selectedMasks.includes(i) ? colors[i] : 'white';
-    drawContours(contours[i], color, ctx, scale);
+    const isSelected = selectedMasks.includes(i);
+    const color = isSelected ? 'white' : colors[i];
+    drawContours(contours[i], color, ctx, scale, isSelected);
   }
 };
 
-const drawContours = (contours, color, ctx, scale) => {
+const drawContours = (contours, color, ctx, scale, isSelected = false) => {
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = isSelected ? 3 : 1;
 
   ctx.beginPath();
   ctx.moveTo(contours[0] * scale, contours[1] * scale);
@@ -201,7 +207,7 @@ const drawContours = (contours, color, ctx, scale) => {
 
   ctx.closePath();
   ctx.stroke();
-  ctx.globalAlpha = 0.3;
+  ctx.globalAlpha = 0.4;
   ctx.fill();
   ctx.globalAlpha = 1.0;
 };
@@ -220,7 +226,7 @@ const cutSelectedMasks = async () => {
     const data = await response.json();
 
     result = `data:image/png;base64,${data.result}`;
-    editedImage = result;
+    outputImage = result;
 
     const container = document.getElementById('resultContainer');
     container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
@@ -260,22 +266,22 @@ const trimImage = async () => {
     const data = await response.json();
 
     result = `data:image/png;base64,${data.trimmed}`;
-    editedImage = result;
+    outputImage = result;
 
     const container = document.getElementById('resultContainer');
     container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
 
-    const scaledImg = new Image();
-    scaledImg.src = result;
-    scaledImg.onload = () => {
+    const trimmedImg = new Image();
+    trimmedImg.src = result;
+    trimmedImg.onload = () => {
       const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-      const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
+      const scale = Math.min((maxWidth - padding) / trimmedImg.width, (maxHeight - padding) / trimmedImg.height);
   
       const imgElement = document.createElement('img');
       imgElement.id = 'uploadedImg';
       imgElement.src = result;
-      imgElement.style.width = `${scaledImg.width * scale}px`;
-      imgElement.style.height = `${scaledImg.height * scale}px`;
+      imgElement.style.width = `${trimmedImg.width * scale}px`;
+      imgElement.style.height = `${trimmedImg.height * scale}px`;
   
       container.appendChild(imgElement);
     };
@@ -297,12 +303,12 @@ const saveImage = async () => {
       });
 
       const writable = await fileHandle.createWritable();
-      await writable.write(await fetch(editedImage).then(response => response.blob()));
+      await writable.write(await fetch(outputImage).then(response => response.blob()));
       await writable.close();
     } else {
       // Fallback to standard download behavior
       const downloadLink = document.createElement('a');
-      downloadLink.href = editedImage;
+      downloadLink.href = outputImage;
       downloadLink.download = 'output_image.png';
       downloadLink.click();
     }
