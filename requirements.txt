@@ -1,0 +1,4 @@
+Flask>=3.0
+pywebview>=4.4.1
+ultralytics>=8.0.209
+opencv-python
