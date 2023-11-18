@@ -5,8 +5,13 @@ let outputImage = null;
 let selectedMasks = [];
 let padding = 40;
 
+let instructions = null;
+let fileLabel = null;
+let fileInput = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   const uploadContainer = document.getElementById('uploadContainer');
+  [instructions, fileLabel, fileInput] = uploadContainer.children;
 
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     uploadContainer.addEventListener(eventName, e => e.preventDefault(), false);
@@ -54,6 +59,9 @@ const uploadImage = async (files) => {
     uploadedImage = `data:image/png;base64,${data.image}`;
     displayImage();
     analyzeImage();
+    
+    // Clear the file input value
+    document.getElementById('fileInput').value = '';
   } catch (error) {
     console.error('Error:', error);
   }
@@ -61,7 +69,8 @@ const uploadImage = async (files) => {
 
 const displayImage = () => {
   const container = document.getElementById('uploadContainer');
-  container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
+  container.innerHTML = '';
+  container.appendChild(fileInput);
 
   const scaledImg = new Image();
   scaledImg.src = uploadedImage;
@@ -93,11 +102,18 @@ const analyzeImage = async () => {
     if ('error' in data) {
       // Handle the case where no objects are detected
       alert(data.error);
+
+      // Reset upload container
+      const container = document.getElementById('uploadContainer');
+      container.innerHTML = '';
+      container.appendChild(instructions);
+      container.appendChild(fileLabel);
+      container.appendChild(fileInput);
     } else {
       uploadContainer.querySelector('.dot-spin').remove();
       changeBtn.disabled = false;
+      renderMasks(data.contours, data.colors, data.mask_overlay);
     }
-    renderMasks(data.contours, data.colors, data.mask_overlay);
   } catch (error) {
     console.error('Error:', error);
   }
@@ -105,7 +121,8 @@ const analyzeImage = async () => {
 
 const renderMasks = async (contours, colors, overlay) => {
   const container = document.getElementById('uploadContainer');
-  container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
+  container.innerHTML = '';
+  container.appendChild(fileInput);
 
   const img = new Image();
   img.src = uploadedImage;
@@ -233,7 +250,8 @@ const cutSelectedMasks = async () => {
     outputImage = result;
 
     const container = document.getElementById('resultContainer');
-    container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
+    container.innerHTML = '';
+    container.appendChild(fileInput);
     outputArea.style.display = "block";
     container.appendChild(document.createElement('div')).classList.add('dot-spin');
   
@@ -273,7 +291,8 @@ const trimImage = async () => {
     outputImage = result;
 
     const container = document.getElementById('resultContainer');
-    container.innerHTML = '<input type="file" id="fileInput" accept=".png, .jpeg, .jpg" style="display:none" onchange="uploadImage(this.files)">';
+    container.innerHTML = '';
+    container.appendChild(fileInput);
 
     const trimmedImg = new Image();
     trimmedImg.src = result;
