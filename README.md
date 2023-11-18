@@ -1,6 +1,6 @@
 # bg.cut
 
-bg.cut is a powerful and intuitive image processing tool designed to simplify background removal from images while providing users with the flexibility to choose specific objects to retain. The application combines advanced technologies to achieve precise results, utilizing YOLO v8 for detecting object bounding boxes and MobileSAM for fast and accurate instance segmentation. Additionally, OpenCV is seamlessly incorporated for efficient mask data handling and manipulation.
+bg.cut is a powerful and intuitive image processing tool designed to simplify background removal from images while providing users with the flexibility to choose specific objects to retain. The application combines YOLO v8 for detecting object bounding boxes that are then passed off to MobileSAM for fast and accurate instance segmentation. Additionally, OpenCV is incorporated for efficient mask data handling and manipulation.
 
 ## Features
 
@@ -27,6 +27,7 @@ cd bg.cut
 pip install -r requirements.txt
 ```
 This will ensure Flask, pywebview, OpenCV, and Ultralytics are installed on your system.
+
 3. Run the application.
 ```
 python App.py
