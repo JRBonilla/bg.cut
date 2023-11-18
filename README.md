@@ -8,8 +8,8 @@ bg.cut is a powerful and intuitive image processing tool designed to simplify ba
 - **Selective Object Retention**: Choose specific objects to retain in the image.
 - **YOLO v8 Integration**: Utilizes YOLO v8 for robust object detection and bounding box generation.
 - **MobileSAM Instance Segmentation**: Implements MobileSAM for fast and accurate instance segmentation, ensuring detailed object boundaries.
-- **OpenCV Handling**: Seamlessly integrates OpenCV for efficient mask data processing and manipulation.
-- **Modern UI**: Features a modern and user-friendly interface for a seamless editing experience.
+- **OpenCV Handling**: OpenCV integrated for efficient mask data processing and manipulation.
+- **Modern UI**: Features a modern and user-friendly interface for a easy editing experience.
 - **Web Technologies**: Developed using Flask, pywebview (for desktop app functionality), HTML, JavaScript, and CSS.
 - **Animations:** Smooth transitions powered by animate.css.
 
