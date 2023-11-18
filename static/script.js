@@ -5,28 +5,31 @@ let outputImage = null;
 let selectedMasks = [];
 let padding = 40;
 
-let instructions = null;
-let fileLabel = null;
-let fileInput = null;
+let instructions, fileLabel, fileInput;
+
+let scaledImageWidth = 0;
+let scaledImageHeight = 0;
+let scale = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
+  const inputAreaContainer = document.getElementById('inputArea');
   const uploadContainer = document.getElementById('uploadContainer');
   [instructions, fileLabel, fileInput] = uploadContainer.children;
 
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadContainer.addEventListener(eventName, e => e.preventDefault(), false);
+    inputAreaContainer.addEventListener(eventName, e => e.preventDefault(), false);
     document.body.addEventListener(eventName, e => e.preventDefault(), false);
   });
 
   ['dragenter', 'dragover'].forEach(eventName => {
-    uploadContainer.addEventListener(eventName, () => uploadContainer.classList.add('drag-over'), false);
+    inputAreaContainer.addEventListener(eventName, () => inputAreaContainer.classList.add('drag-over'), false);
   });
 
   ['dragleave', 'drop'].forEach(eventName => {
-    uploadContainer.addEventListener(eventName, () => uploadContainer.classList.remove('drag-over'), false);
+    inputAreaContainer.addEventListener(eventName, () => inputAreaContainer.classList.remove('drag-over'), false);
   });
 
-  uploadContainer.addEventListener('drop', async e => {
+  inputAreaContainer.addEventListener('drop', async e => {
     const files = e.dataTransfer.files;
     await uploadImage(files);
   });
@@ -59,7 +62,7 @@ const uploadImage = async (files) => {
     uploadedImage = `data:image/png;base64,${data.image}`;
     displayImage();
     analyzeImage();
-    
+
     // Clear the file input value
     document.getElementById('fileInput').value = '';
   } catch (error) {
@@ -76,14 +79,17 @@ const displayImage = () => {
   scaledImg.src = uploadedImage;
   scaledImg.onload = () => {
     const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-    const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
+    scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
+
+    scaledImageWidth = scaledImg.width * scale;
+    scaledImageHeight = scaledImg.height * scale;
 
     const imgElement = document.createElement('img');
     imgElement.id = 'uploadedImg';
     imgElement.src = uploadedImage;
     imgElement.classList.add('faded-out');
-    imgElement.style.width = `${scaledImg.width * scale}px`;
-    imgElement.style.height = `${scaledImg.height * scale}px`;
+    imgElement.style.width = `${scaledImageWidth}px`;
+    imgElement.style.height = `${scaledImageHeight}px`;
 
     container.appendChild(imgElement);
     container.appendChild(document.createElement('div')).classList.add('dot-spin');
@@ -127,10 +133,8 @@ const renderMasks = async (contours, colors, overlay) => {
   const img = new Image();
   img.src = uploadedImage;
   img.onload = () => {
-    // Calculate the scaled canvas width and height
-    const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-    const scale = Math.min((maxWidth - padding) / img.width, (maxHeight - padding) / img.height);
-    const [canvasWidth, canvasHeight] = [img.width * scale, img.height * scale];
+    // Set the canvas width and height
+    const [canvasWidth, canvasHeight] = [scaledImageWidth, scaledImageHeight];
 
     // Draw the uploaded image on one canvas
     const { canvas: imageCanvas, context: imageCtx } = createCanvasAndContext(canvasWidth, canvasHeight);
@@ -257,15 +261,12 @@ const cutSelectedMasks = async () => {
   
     const scaledImg = new Image();
     scaledImg.src = result;
-    scaledImg.onload = () => {
-      const { clientWidth: maxWidth, clientHeight: maxHeight } = container;
-      const scale = Math.min((maxWidth - padding) / scaledImg.width, (maxHeight - padding) / scaledImg.height);
-  
+    scaledImg.onload = () => {  
       const imgElement = document.createElement('img');
       imgElement.id = 'uploadedImg';
       imgElement.src = result;
-      imgElement.style.width = `${scaledImg.width * scale}px`;
-      imgElement.style.height = `${scaledImg.height * scale}px`;
+      imgElement.style.width = `${scaledImageWidth}px`;
+      imgElement.style.height = `${scaledImageHeight}px`;
   
       container.appendChild(imgElement);
     };
