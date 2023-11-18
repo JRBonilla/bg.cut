@@ -71,12 +71,14 @@ def analyze():
 
     try:
         # Perform segmentation on the uploaded image
-        bboxes, contours = processor.detect(uploaded_image)
+        result = processor.detect(uploaded_image)
 
-        # Check if no segments are detected
-        if not contours:
-            return jsonify({'error': 'No segments detected'})
+        # Check if no objects were detected
+        if result is None:
+            return jsonify({'error': 'No objects detected by YOLO'})
         
+        bboxes, contours = result
+
         # Create an empty image with each mask drawn in a unique RGB color
         mask_overlay = np.zeros_like(uploaded_image)
         colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in contours]

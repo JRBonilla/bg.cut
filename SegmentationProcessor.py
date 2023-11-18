@@ -14,6 +14,10 @@ class SegmentationProcessor(object):
         # Use the YOLO model to detect objects in the input image
         objects = self.yolo.predict(image, device='cpu')
 
+        # Check if no objects were detected by YOLO
+        if not objects[0].boxes:
+            return None
+
         # Extract bounding boxes from the objects array
         bboxes = np.array(objects[0].boxes.xyxy.cpu(), dtype="int")
 
@@ -26,5 +30,4 @@ class SegmentationProcessor(object):
     
     def segment(self, image, bboxes):
         results = self.msam.predict(image, bboxes=bboxes)
-        print(results)
         return results[0].masks

@@ -90,9 +90,13 @@ const analyzeImage = async () => {
     });
     const data = await response.json();
 
-    uploadContainer.querySelector('.dot-spin').remove();
-    changeBtn.disabled = false;
-
+    if ('error' in data) {
+      // Handle the case where no objects are detected
+      alert(data.error);
+    } else {
+      uploadContainer.querySelector('.dot-spin').remove();
+      changeBtn.disabled = false;
+    }
     renderMasks(data.contours, data.colors, data.mask_overlay);
   } catch (error) {
     console.error('Error:', error);
