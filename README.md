@@ -11,7 +11,7 @@ bg.cut is a powerful and intuitive image processing tool designed to simplify ba
 - **OpenCV Handling**: Seamlessly integrates OpenCV for efficient mask data processing and manipulation.
 - **Modern UI**: Features a modern and user-friendly interface for a seamless editing experience.
 - **Web Technologies**: Developed using Flask, pywebview (for desktop app functionality), HTML, JavaScript, and CSS.
-- **Animations:** Enhances user experience with smooth transitions powered by animate.css.
+- **Animations:** Smooth transitions powered by animate.css.
 
 ## Installation
 
