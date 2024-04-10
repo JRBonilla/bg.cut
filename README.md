@@ -1,5 +1,7 @@
 # bg.cut
 
+![](https://github.com/JRBonilla/bg.cut/blob/main/app-demo.gif)
+
 bg.cut is a powerful and intuitive image processing tool designed to simplify background removal from images while providing users with the flexibility to choose specific objects to retain. The application combines YOLO v8 for detecting object bounding boxes that are then passed off to MobileSAM for fast and accurate instance segmentation. Additionally, OpenCV is incorporated for efficient mask data handling and manipulation.
 
 ## Features
